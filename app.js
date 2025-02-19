@@ -1,4 +1,5 @@
-// Fetch data from API
+let currentEditingRow = null;
+
 async function fetchData() {
   try {
     const response = await fetch(
@@ -11,7 +12,6 @@ async function fetchData() {
   }
 }
 
-// Populate table with data
 function populateTable(data) {
   const tbody = document.getElementById("tableBody");
   tbody.innerHTML = "";
@@ -19,92 +19,98 @@ function populateTable(data) {
   data.forEach((item) => {
     const row = document.createElement("tr");
     row.innerHTML = `
-                    <td>${item.buyer_id}</td>
-                    <td>${item.buyer}</td>
-                    <td>${item.po}</td>
-                    <td>${item.qty_pcs}</td>
-                    <td>${item.assign_date}</td>
-                    <td class="editable-date">${item.shipment_etd}</td>
-                    <td>
-                        <button class="edit-btn" onclick="enableEdit(this)">Edit</button>
-                    </td>
-                `;
+              <td>${item.id}</td>
+              <td>${item.buyer_id}</td>
+              <td>${item.buyer}</td>
+              <td>${item.po}</td>
+              <td>${item.qty_pcs}</td>
+               <td>${new Date(item.assign_date).toLocaleDateString()}</td>
+              
+               <td class="${getDateStatusClass(item.shipment_etd)}">
+                  ${new Date(item.shipment_etd).toLocaleDateString()}
+              </td>
+              <td>${item.color}</td>
+
+              <td>${item.total_lead_time}</td>
+              <td>${item.order_free_time}</td>
+              <td>${item.lab_dip_submission_plan}</td>
+              <td>${item.item}</td>
+              <td>${item.lab_dip_submission_actual}</td>
+              <td>${item.fabric_booking_plan}</td>
+              
+             
+             
+          `;
+    row.addEventListener("click", () => showModal(row, item));
     tbody.appendChild(row);
   });
 }
 
-// Enable edit mode
-function enableEdit(button) {
-  const row = button.closest("tr");
-  const dateCell = row.querySelector(".editable-date");
-  const currentDate = dateCell.textContent;
+function getDateStatusClass(dateString) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const shipDate = new Date(dateString);
+  shipDate.setHours(0, 0, 0, 0);
 
-  // Create date input
-  const dateInput = document.createElement("input");
-  dateInput.type = "date";
-  dateInput.value = currentDate;
+  const diffDays = Math.floor((shipDate - today) / (1000 * 60 * 60 * 24));
 
-  // Replace text with input
-  dateCell.innerHTML = "";
-  dateCell.appendChild(dateInput);
-
-  // Change buttons
-  button.outerHTML = `
-                <button class="save-btn" onclick="saveDate(this)">Save</button>
-                <button class="cancel-btn" onclick="cancelEdit(this)">Cancel</button>
-            `;
+  if (diffDays < 0) return "expired";
+  if (diffDays <= 3) return "warning";
+  return "";
 }
 
-// Save edited date
-function saveDate(button) {
-  const row = button.closest("tr");
-  const dateInput = row.querySelector('input[type="date"]');
-  const newDate = dateInput.value;
+function showModal(row, item) {
+  currentEditingRow = { row, item };
+  const modal = document.getElementById("editModal");
+  const dateInput = document.getElementById("shipmentDate");
 
-  // Update cell content
-  const dateCell = row.querySelector(".editable-date");
-  dateCell.textContent = newDate;
-
-  // Change buttons back to edit
-  row.querySelector("td:last-child").innerHTML = `
-                <button class="edit-btn" onclick="enableEdit(this)">Edit</button>
-            `;
+  dateInput.value = new Date(item.shipment_etd).toISOString().split("T")[0];
+  modal.style.display = "block";
 }
 
-// Cancel edit
-function cancelEdit(button) {
-  const row = button.closest("tr");
-  const originalDate = row.querySelector(".editable-date").dataset.originalDate;
-
-  // Restore original content
-  const dateCell = row.querySelector(".editable-date");
-  dateCell.textContent = originalDate;
-
-  // Change buttons back to edit
-  row.querySelector("td:last-child").innerHTML = `
-                <button class="edit-btn" onclick="enableEdit(this)">Edit</button>
-            `;
+function closeModal() {
+  document.getElementById("editModal").style.display = "none";
+  currentEditingRow = null;
 }
 
-async function updateShipmentDate(id, newDate) {
+async function saveChanges() {
+  const newDate = document.getElementById("shipmentDate").value;
+
   try {
-    const response = await fetch(
-      `http://49.0.39.93:1008/api/testtnas_dashboard/${id}`,
+    //  API call
+    await fetch(
+      `http://49.0.39.93:1008/api/testtnas_dashboard/${currentEditingRow.item.id}`,
       {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ shipment_etd: newDate }),
+        body: JSON.stringify({
+          ...currentEditingRow.item,
+          shipment_etd: newDate,
+        }),
       }
     );
 
-    if (!response.ok) {
-      throw new Error("Update failed");
-    }
+    // Update local data
+    currentEditingRow.item.shipment_etd = newDate;
+    const dateCell = currentEditingRow.row.cells[6];
+    dateCell.textContent = new Date(newDate).toLocaleDateString();
+    dateCell.className = getDateStatusClass(newDate);
+
+    closeModal();
   } catch (error) {
-    console.error("Error updating date:", error);
+    console.error("Error saving data:", error);
   }
 }
+
+// Close modal when clicking outside
+window.onclick = function (event) {
+  const modal = document.getElementById("editModal");
+  if (event.target === modal) {
+    closeModal();
+  }
+};
+
 
 fetchData();
