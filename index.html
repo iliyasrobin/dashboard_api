@@ -1,31 +1,46 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
+<head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Shipment Dashboard</title>
     <link rel="stylesheet" href="style.css" />
-  </head>
-  <body>
-    <div class="container">
-      <h1 id="head">Dashboard</h1>
-      <table id="shipmentTable">
-        <thead>
-          <tr>
-            <th>Buyer ID</th>
-            <th>Buyer</th>
-            <th>PO</th>
-            <th>Quantity(Pcs)</th>
-            <th>Assign Date</th>
-            <th>Shipment ETD</th>
-            <th>Action</th>
-          </tr>
-        </thead>
-        <tbody id="tableBody">
-          <!-- Data will be inserted here -->
-        </tbody>
-      </table>
+</head>
+<body>
+    <div class="table-container">
+        <table id="shipmentTable">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Buyer ID</th>
+                    <th>Buyer</th>
+                    <th>PO</th>
+                    <th>Qty (PCS)</th>
+                    <th>Assign Date</th>
+                    <th>Shipment ETD</th>
+                    <th>Color</th>
+                    <th>Total Lead Time</th>
+                    <th>Order Free Time</th>
+                    <th>Lab Dip Submission Plan</th>
+                    <th>Item</th>
+                    <th>Lab Dip Submission Actual</th>
+                    <th>Fabric Booking Plan</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+                <!-- Table data will go here -->
+            </tbody>
+        </table>
+    </div>
+
+    <div id="editModal" class="modal">
+        <h3>Edit Shipment Date</h3>
+        <input type="date" id="shipmentDate" />
+        <div class="modal-buttons">
+            <button onclick="closeModal()">Cancel</button>
+            <button onclick="saveChanges()">Save</button>
+        </div>
     </div>
     <script src="app.js"></script>
-  </body>
+</body>
 </html>
